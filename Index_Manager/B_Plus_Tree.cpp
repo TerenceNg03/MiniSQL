@@ -9,24 +9,24 @@
 
 using namespace std;
 
-template <class key,class record> B_Plus_Tree<key,record>::Node::Node(key x, bool Isleaf){
+template <class key> B_Plus_Tree<key>::Node::Node(key x, bool Isleaf){
     values.push_back(x);
     this->Isleaf = Isleaf;
 }
 
-template <class key,class record> B_Plus_Tree<key,record>::Node::~Node(){
+template <class key> B_Plus_Tree<key>::Node::~Node(){
 }
 
-template <class key,class record> B_Plus_Tree<key,record>::B_Plus_Tree(int order){
-    this->order = 3;
+template <class key> B_Plus_Tree<key>::B_Plus_Tree(int order){
+    this->order = order;
     this->root = NULL;
 }
 
-template <class key,class record> typename B_Plus_Tree<key,record>::Node* B_Plus_Tree<key,record>::getroot(){
+template <class key> typename B_Plus_Tree<key>::Node* B_Plus_Tree<key>::getroot(){
     return root;
 }
 
-template <class key,class record> void B_Plus_Tree<key,record>::insert(key x, record* r){
+template <class key> void B_Plus_Tree<key>::insert(key x, record r){
     
     Node* target = _search(x);
     
@@ -41,12 +41,12 @@ template <class key,class record> void B_Plus_Tree<key,record>::insert(key x, re
     }
     
     for(int i=0; i<target->values.size(); i++){
-        if(x>=*(target->values.rbegin())){
+        if(!(x<*(target->values.rbegin()))){
             target->values.push_back(x);
             target->records.push_back(r);
             break;
         }
-        if(target->values[i]>x){
+        if(!(target->values[i]<x||target->values[i]==x)){
             target->values.insert(target->values.begin()+i,x);
             target->records.insert(target->records.begin()+i,r);
             break;
@@ -60,7 +60,7 @@ template <class key,class record> void B_Plus_Tree<key,record>::insert(key x, re
     
 }
 
-template <class key,class record> void B_Plus_Tree<key,record>:: _split_node(Node* n){
+template <class key> void B_Plus_Tree<key>:: _split_node(Node* n){
     
     Node* new_node;
     
@@ -68,9 +68,9 @@ template <class key,class record> void B_Plus_Tree<key,record>:: _split_node(Nod
         int split = (order)/2;
         new_node = new Node(n->values[split]);
         new_node->values = vector<key>(n->values.begin()+split,n->values.end());
-        new_node->records = vector<record*>(n->records.begin()+split,n->records.end());
+        new_node->records = vector<record>(n->records.begin()+split,n->records.end());
         n->values = vector<key>(n->values.begin(),n->values.begin()+split);
-        n->records = vector<record*>(n->records.begin(),n->records.begin()+split);
+        n->records = vector<record>(n->records.begin(),n->records.begin()+split);
         
         if(n->p==NULL){
             Node* new_root = new Node(new_node->values[0],false);
@@ -85,7 +85,7 @@ template <class key,class record> void B_Plus_Tree<key,record>:: _split_node(Nod
             Node* p = n->p;
             key end = *(new_node->values.rbegin());
             for(int i=0; i<p->values.size();i++){
-                if(p->values[i]>=end){
+                if(!(p->values[i]<end)){
                     insert_pos = i;
                     break;
                 }
@@ -126,7 +126,7 @@ template <class key,class record> void B_Plus_Tree<key,record>:: _split_node(Nod
             Node* p = n->p;
             key end = *(new_node->values.rbegin());
             for(int i=0; i<p->values.size();i++){
-                if(p->values[i]>=end){
+                if(!(p->values[i]<end)){
                     insert_pos = i;
                     break;
                 }
@@ -145,13 +145,13 @@ template <class key,class record> void B_Plus_Tree<key,record>:: _split_node(Nod
     
 }
 
-template <class key,class record> typename B_Plus_Tree<key,record>::Node* B_Plus_Tree<key,record>::_search(key x){
+template <class key> typename B_Plus_Tree<key>::Node* B_Plus_Tree<key>::_search(key x){
     
     if (root==NULL)return NULL;
     
     Node* n = root;
     while(!n->Isleaf){
-        if(x>=*(n->values.rbegin())){
+        if(!(x<*(n->values.rbegin()))){
             n = n->child[n->values.size()];
             continue;
         }
@@ -165,15 +165,38 @@ template <class key,class record> typename B_Plus_Tree<key,record>::Node* B_Plus
     return n;
 }
 
-template <class key,class record> record* B_Plus_Tree<key,record>::pop(key x){
+template <class key> typename B_Plus_Tree<key>::record B_Plus_Tree<key>::search(key x){
     Node* target = _search(x);
-    record* ret = NULL;
     
     if(target == NULL){
-        return NULL;
+        return -1;
     }
     
-    int pos;
+    for(int i=0; i<target->values.size(); i++){
+        if(target->values[i]==x){
+            return target->records[i];
+        }
+    }
+    
+    return -1;
+}
+
+template <class key> key B_Plus_Tree<key>::_min(Node* n){
+    while (!n->Isleaf) {
+        n = n->child[0];
+    }
+    return n->values[0];
+}
+
+template <class key> typename B_Plus_Tree<key>::record B_Plus_Tree<key>::erase(key x){
+    Node* target = _search(x);
+    record ret = -1;
+    
+    if(target == NULL){
+        return -1;
+    }
+    
+    int pos = 0;
     bool found = false;
     for(int i=0; i<target->values.size(); i++){
         if(target->values[i]==x){
@@ -197,7 +220,7 @@ template <class key,class record> record* B_Plus_Tree<key,record>::pop(key x){
     return ret;
 }
 
-template <class key,class record> void B_Plus_Tree<key,record>::underflow_fix(B_Plus_Tree<key,record>::Node* n){
+template <class key> void B_Plus_Tree<key>::underflow_fix(B_Plus_Tree<key>::Node* n){
     
     if (n->values.size()>=(order/2))return;
     if(n->p==NULL){
@@ -215,7 +238,7 @@ template <class key,class record> void B_Plus_Tree<key,record>::underflow_fix(B_
     
     auto p = n->p;
     
-    int pos;
+    int pos = 0;
     
     for(int i=0; i<p->child.size(); i++){
         if(p->child[i]==n){
@@ -248,22 +271,22 @@ template <class key,class record> void B_Plus_Tree<key,record>::underflow_fix(B_
         }
     }else{
         if(left_sib!=NULL && left_sib->values.size()>(order/2)){
-            n->values.insert(n->values.begin(),left_sib->values.back());
+            n->values.insert(n->values.begin(),_min(n));
             left_sib->values.pop_back();
             n->child.insert(n->child.begin(),left_sib->child.back());
             left_sib->child.pop_back();
             n->child[0]->p = n;
-            p->values[pos-1] = n->values[0];
+            p->values[pos-1] = _min(n);
             return;
         }
         
         if(right_sib!=NULL && right_sib->values.size()>(order/2)){
-            n->values.push_back(right_sib->child[0]->values[0]);
+            n->values.push_back(_min(right_sib->child[0]));
             n->child.push_back(right_sib->child[0]);
             right_sib->values.erase(right_sib->values.begin());
             right_sib->child.erase(right_sib->child.begin());
             n->child[n->child.size()-1]->p = n;
-            p->values[pos] = right_sib->values[0];
+            p->values[pos] = _min(right_sib);
             return;
         }
     }
@@ -314,37 +337,16 @@ template <class key,class record> void B_Plus_Tree<key,record>::underflow_fix(B_
     underflow_fix(n->p);
 }
 
-void BP_unit_test::test(){
-    B_Plus_Tree<int, char> BPT;
-    char s[]="abcdefghijklmnopqrstuvwxyz";
-    int in[]={5,13,6,10,2,0,9,12};
-    for(int i=0; i<sizeof(in)/sizeof(int); i++){
-        BPT.insert(in[i], s+i);
-    }
-    auto root = BPT.getroot();
-    DFS(root, 0);
-    
-    printf("---------------------------------\n");
-    
-    BPT.pop(0);
-//    BPT.pop(2);
-//    BPT.pop(5);
-//    BPT.pop(6);
-//    BPT.pop(9);
-    root = BPT.getroot();
-    DFS(root, 0);
-    
-    
-}
 
-void BP_unit_test::DFS(B_Plus_Tree<int, char>::Node * node,int depth){
+void DFS(B_Plus_Tree<db_item>::Node * node,int depth){
     if(node==NULL)return;
     if(node->Isleaf){
         for(int i=0; i<depth; i++){
             putchar('\t');
         }
         for (int i=0; i<node->values.size();i++){
-            printf("%d'%c' ",node->values[i],*node->records[i]);
+            //printf("%d'%c' ",node->values[i],*node->records[i]);
+            printf("%d ",node->values[i].i);
         }
         putchar('\n');
     }else{
@@ -353,9 +355,31 @@ void BP_unit_test::DFS(B_Plus_Tree<int, char>::Node * node,int depth){
             for(int i=0; i<depth; i++){
                 putchar('\t');
             }
-            printf("%d\n",node->values[i]);
+            printf("%d\n",node->values[i].i);
             DFS(node->child[i+1],depth+1);
         }
     }
 }
 
+void BP_unit_test::test(){
+    B_Plus_Tree<db_item> BPT(3);
+    int s[]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
+    int in[]={5,13,6,10,2,0,9,12};
+    for(int i=0; i<sizeof(in)/sizeof(int); i++){
+        BPT.insert(db_item(in[i]), s[i]);
+    }
+    auto root = BPT.getroot();
+//    DFS(root, 0);
+    
+//    printf("---------------------------------\n");
+    
+    BPT.erase(23);
+    BPT.erase(19);
+    BPT.erase(5);
+    BPT.erase(6);
+    BPT.erase(9);
+//    root = BPT.getroot();
+    DFS(root, 0);
+    
+    
+}

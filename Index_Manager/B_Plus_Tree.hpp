@@ -10,15 +10,24 @@
 
 #include <vector>
 #include <cstdio>
+#include "Record_Manager.hpp"
 
-template <class key,class record> class B_Plus_Tree{
+template <class T> class buf_ptr{
+    T* val;
+    buf_ptr(std::string filename, T& t);
+    T* operator ->();
+    
+};
+
+template <class key> class B_Plus_Tree{
     
 public:
+    typedef int record;
     
     struct Node{
         Node* p = NULL;
         bool Isleaf;
-        std::vector<record*> records;
+        std::vector<int> records;
         std::vector<key> values;
         std::vector<Node*> child;
         Node(key x, bool Isleaf = true);
@@ -27,9 +36,9 @@ public:
     
     B_Plus_Tree(int order = 3);
     
-    void insert(key x,record* r);
+    void insert(key x,record r);
     
-    record* pop(key x);
+    record erase(key x);
     
     record search(key x);
     
@@ -46,14 +55,12 @@ private:
     
     void underflow_fix(Node* n);
     
+    key _min(Node* n);
+    
 };
 
 namespace BP_unit_test {
-
 void test();
-
-void DFS(B_Plus_Tree<int, char>::Node * node,int depth);
-
 }
 
 

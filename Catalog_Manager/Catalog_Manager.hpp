@@ -11,23 +11,30 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include "Buffer_Manager.hpp"
+#include "Record_Manager.hpp"
 
-const char catalog_filename[] = {"catalog.cat"} ;
 
-class Table_def{
-public:
-    enum TYPE{INT,FLOAT,CHAR};
-    struct column{
-        TYPE type;
-        unsigned char length;
-        std::string name;
-    };
-    std::vector<column> columns;
-    std::string name;
-    Table_def();
-    std::string dump();
-    void load(FILE*);
+struct Catalog_Manager{
+    
+    std::vector<db_table> catalogs;
+    const static std::string catalog_filename;
+    void load_catalog();
+
+    void dump_catalog();
+    
+    Catalog_Manager();
+    ~Catalog_Manager();
+    
+    void insert(const db_table& tab);
+    void erase(const std::string& name);
+    void clear();
+    
 };
 
+
+namespace catalog_unit_test {
+void test();
+}
 
 #endif /* Catalog_Manager_hpp */
