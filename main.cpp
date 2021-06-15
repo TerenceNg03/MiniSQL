@@ -22,10 +22,11 @@ int main(int argc, const char * argv[]) {
 //    Record_Manager_unit_test::test();
     yyscan_t scanner;
     yylex_init(&scanner);
-    printf("MiniSQL shell by Adam Wu\nMiniSQL $");
+    printf("MiniSQL shell by Adam Wu\n\nMiniSQL $ ");
     int i=1;
     while(i){
         try{
+            filemode = 0;
             i = yyparse(scanner);
         }catch(const exception& ex){
             printf("%s",ex.what());

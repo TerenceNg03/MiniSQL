@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "y.tab.h"
 
+char filemode = 1;
 
 %}
 
@@ -50,14 +51,14 @@ and return AND;
 "<>" return NOT;
 
 [a-zA-Z_]{1,}[0-9a-zA-Z_]* yylval->s = strdup(yytext); return IDENTIFIER;
-[a-zA-Z_\-\./]* yylval->s = strdup(yytext); return FILENAME;
+[a-zA-Z_\-\./0-9]* yylval->s = strdup(yytext); return FILENAME;
 
 \( return L_BRACKET;
 \) return R_BRACKET;
 \; return SEMICOLON;
 \, return COMMA;
 \* return ALL;
-\n printf("MiniSQL $ ");/* ignore end of line */
+\n if(!filemode)printf("MiniSQL $ ");/* ignore end of line */
 [ \t]+ /* ignore whitespace */
 %%
 

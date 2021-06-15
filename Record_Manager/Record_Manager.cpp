@@ -220,6 +220,10 @@ void Record_Manager_unit_test::test(){
             {db_item::type::DB_CHAR,"NAME",true,false,20},
             {db_item::type::DB_INT,"ID",true,true}
         },
+        {
+            {"IND_SAL","SALARY"},
+            {"_PRIM","ID"}
+        },
         "teacher",0,"teacher.dat"
     }
     ;

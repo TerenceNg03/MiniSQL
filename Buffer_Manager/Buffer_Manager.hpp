@@ -16,6 +16,8 @@
 #include <map>
 #include <memory>
 
+class B_Plus_tree;
+
 class lru_cache{
     
     struct block{
@@ -42,7 +44,7 @@ public:
     
     ~lru_cache();
     
-
+    friend class B_Plus_tree;
 };
 
 namespace lru_cache_unit_test {

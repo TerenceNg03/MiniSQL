@@ -27,6 +27,7 @@ void yyerror(YYLTYPE* yyllocp, yyscan_t scanner, const char *s)
 %code requires{
     #include "C_warpper.hpp"
     typedef void* yyscan_t;
+    extern char filemode;
 }
 
 %define parse.error verbose
@@ -224,6 +225,6 @@ QUIT
 }
 
 execfile:
-EXECFILE IDENTIFIER {cmd_execfile($2);}
-| EXECFILE FILENAME {cmd_execfile($2);}
+EXECFILE IDENTIFIER {filemode = 1; cmd_execfile($2); filemode = 0;}
+| EXECFILE FILENAME {filemode = 1; cmd_execfile($2); filemode = 0;}
 %%
