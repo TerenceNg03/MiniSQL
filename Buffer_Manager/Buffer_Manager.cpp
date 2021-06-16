@@ -109,7 +109,7 @@ char* lru_cache::_seek_buf(const string& filename, int index){
             }
             
         }
-        shared_ptr<block> b_ptr = shared_ptr<block>(new block(_buf_size));
+        shared_ptr<block> b_ptr = make_shared<block>(_buf_size);
         //(char*)malloc(_buf_size*sizeof(char));
         FILE* fp = fopen(filename.c_str(), "r");
         if(fp==NULL)throw FormatException("Faild to open file : %s",filename.c_str());
@@ -134,8 +134,8 @@ lru_cache::~lru_cache(){
         fwrite(it.second->content.get(), sizeof(char), _buf_size, fp);
         fclose(fp);
     }
-    hash_table.clear();
-    cache.clear();
+//    hash_table.clear();
+//    cache.clear();
 }
 
 void lru_cache::pin_buf(const std::string& filename, int index){

@@ -13,6 +13,7 @@
 #include "Interpreter.hpp"
 #include <regex>
 #include <memory>
+#include "B_Plus_Tree.hpp"
 using namespace std;
 
 struct _c_column{
@@ -57,11 +58,11 @@ extern Catalog_Manager ctm;
 
 void cmd_create_table(char* name, c_columns* cols, char* prim){
     bool found = false;
-    for(auto c:cols->val){
+    for(int i=0; i<cols->val.size(); i++){
         //printf("%s %s\n",c.name.c_str(),prim);
-        if(!strcmp(c.name.c_str(),prim)){
-            c.IsPrimary = true;
-            c.IsUnique = true;
+        if(!strcmp(cols->val[i].name.c_str(),prim)){
+            cols->val[i].IsPrimary = true;
+            cols->val[i].IsUnique = true;
             found = true;
         }
     }
@@ -131,6 +132,18 @@ void cmd_insert(char* _name, c_dbitems* items){
     if(it==ctm.catalogs.end()){
         throw FormatException("Can not insert into non-exist table %s.\n");
     }
+    for(int i=0; i<it->size; i++){
+        auto entry = Record_Manager::read(*it, i);
+        if(entry.first){
+            for(int i=0; i<it->columns.size(); i++){
+                if(it->columns[i].IsUnique){
+                    if(entry.second[i]==items->val[i])
+                        throw FormatException("Unique constraint check failed\n");
+                }
+            }
+        }
+    }
+    
     
     Record_Manager::insert(ctm.catalogs[it-ctm.catalogs.begin()], items->val);
     delete items;
@@ -207,7 +220,7 @@ void cmd_select(char* _name, conditions* cds){
         throw FormatException("Unknown table name %s\n",name.c_str());
     }
     printf("size : %d\n",dbt->size);
-    auto result = vector<vector<db_item>>();
+//    auto result = vector<vector<db_item>>();
     for(auto c:dbt->columns){
         printf("\t%s",c.name.c_str());
     }
@@ -258,4 +271,40 @@ void cmd_execfile(char* filename){
     yyparse(scanner);
     yylex_destroy(scanner);
     free(filename);
+}
+
+void cmd_create_index(char* _index, char* _name, char*_col){
+    string name(_name);
+    string index(_index);
+    string col(_col);
+    free(_index);
+    free(_name);
+    free(_col);
+    auto dbt = find_if(ctm.catalogs.begin(), ctm.catalogs.end(), [=](auto i)->bool{return i.name==name;});
+    if(dbt==ctm.catalogs.end()){
+        throw FormatException("Unknown table name %s\n",name.c_str());
+    }
+    auto dbt_col = find_if(dbt->columns.begin(), dbt->columns.end(), [=](auto i)->bool{return i.name==col;});
+    if(dbt_col==dbt->columns.end()){
+        throw FormatException("Unknown coloumn name %s\n",col.c_str());
+    }
+    if(!dbt_col->IsUnique)throw FormatException("Cannot create index on non-unique coloumn\n");
+    auto bpt = B_Plus_tree("DB_Data/"+index+".idx",dbt_col->T,dbt_col->length);
+    ctm.indexs.push_back(make_pair(index, make_pair(name, col)));
+    for(int i=0; i<dbt->size; i++){
+        auto entry = Record_Manager::read(*dbt, i);
+        if(entry.first){
+            bpt.insert(entry.second[dbt_col-dbt->columns.begin()], i);
+        }
+    }
+}
+void cmd_drop_index(char* _index){
+    string index(_index);
+    free(_index);
+    auto idx = find_if(ctm.indexs.begin(), ctm.indexs.end(), [=](auto i)->bool{return i.first==index;});
+    if(idx==ctm.indexs.end()){
+        throw FormatException("Unknown index %s\n",index.c_str());
+    }
+    
+    ctm.indexs.erase(idx);
 }

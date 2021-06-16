@@ -18,6 +18,7 @@
 struct Catalog_Manager{
     
     std::vector<db_table> catalogs;
+    std::vector<std::pair<std::string,std::pair<std::string,std::string>>> indexs;
     const static std::string catalog_filename;
     void load_catalog();
 

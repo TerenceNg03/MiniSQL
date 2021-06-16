@@ -87,6 +87,9 @@ command: | create_index | create_table | drop_table | drop_index | select | inse
 
 create_index:
 CREATE INDEX IDENTIFIER ON IDENTIFIER L_BRACKET IDENTIFIER R_BRACKET
+{
+    cmd_create_index($3,$5,$7);
+}
 
 create_table :
 CREATE TABLE IDENTIFIER L_BRACKET table_cols table_col_prim R_BRACKET
@@ -158,6 +161,9 @@ DROP TABLE IDENTIFIER
 
 drop_index:
 DROP INDEX IDENTIFIER
+{
+    cmd_drop_index($3);
+}
 
 select:
 SELECT ALL FROM IDENTIFIER opt_conditions

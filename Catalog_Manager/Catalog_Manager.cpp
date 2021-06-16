@@ -44,12 +44,21 @@ void Catalog_Manager::erase(const std::string& name){
 
 /*
  catalog file structure
+ int cat_size
+ int index_size
  
+ index:
+ [
+ 256 index name
+ 256 table name
+ 256 col name
+ ]
+ 
+ table:
+ [
  256 name
  256 filename
  size
- index_size
- index_name coloum_name
  coloums_number
  coloums:
     type
@@ -57,6 +66,7 @@ void Catalog_Manager::erase(const std::string& name){
     bool IsUnique
     bool IsPrimary
     (optional) length
+ ]
  */
 
 void Catalog_Manager::dump_catalog(){
@@ -64,6 +74,13 @@ void Catalog_Manager::dump_catalog(){
     char s[256] = {0};
     int cat_size = (int)catalogs.size();
     fwrite(&cat_size, sizeof(cat_size), 1, fp);
+    int idx_size = (int)indexs.size();
+    fwrite(&idx_size, sizeof(idx_size), 1, fp);
+    for(auto i:indexs){
+        fwrite(i.first.c_str(), sizeof(char), 256, fp);
+        fwrite(i.second.first.c_str(), sizeof(char), 256, fp);
+        fwrite(i.second.second.c_str(), sizeof(char), 256, fp);
+    }
     for(auto t : catalogs){
         strcpy(s,t.name.c_str());
         fwrite(s, sizeof(char), 256, fp);
@@ -72,18 +89,8 @@ void Catalog_Manager::dump_catalog(){
         fwrite(s, sizeof(char), 256, fp);;
         memset(s, 0, sizeof(s));
         fwrite(&t.size, sizeof(t.size), 1, fp);
-        int index_size = (int)t.index.size();
-        fwrite(&index_size, sizeof(index_size), 1, fp);
         int n_cols = (int)t.columns.size();
         fwrite(&n_cols, sizeof(n_cols), 1, fp);
-        for(auto p:t.index){
-            memset(s, 0, sizeof(s));
-            strcpy(s, p.first.c_str());
-            fwrite(s, sizeof(char), 256, fp);
-            memset(s, 0, sizeof(s));
-            strcpy(s, p.second.c_str());
-            fwrite(s, sizeof(char), 256, fp);
-        }
         for(auto col: t.columns){
             fwrite(&col.T, sizeof(col.T), 1, fp);
             memset(s, 0, sizeof(s));
@@ -105,6 +112,19 @@ void Catalog_Manager::load_catalog(){
     int cata_size;
     fread(&cata_size, sizeof(int), 1, fp);
     //printf("cata_size : %d\n",cata_size);
+    int idx_size;
+    fread(&idx_size, sizeof(int), 1, fp);
+    for(int i=0; i<idx_size; i++){
+        char s[256];
+        string idx,tab,col;
+        fread(s, sizeof(char), 256, fp);
+        idx = s;
+        fread(s, sizeof(char), 256, fp);
+        tab = s;
+        fread(s, sizeof(char), 256, fp);
+        col = s;
+        indexs.push_back(make_pair(idx, make_pair(tab, col)));
+    }
     for(int i=0; i<cata_size; i++){
         char s[256];
         db_table dbt;
@@ -115,18 +135,6 @@ void Catalog_Manager::load_catalog(){
         fread(s, sizeof(char), 256, fp);
         dbt.filename = s;
         fread(&dbt.size, sizeof(dbt.size), 1, fp);
-        int index_size;
-        fread(&index_size, sizeof(index_size), 1, fp);
-        for(int i=0; i<index_size; i++){
-            pair<string,string> ps;
-            memset(s, 0, 256);
-            fread(s, sizeof(char), 256, fp);
-            ps.first = s;
-            memset(s, 0, 256);
-            fread(s, sizeof(char), 256, fp);
-            ps.second = s;
-            dbt.index.push_back(ps);
-        }
         int n_cols;
         fread(&n_cols, sizeof(n_cols), 1, fp);
         //printf("n_cols : %d\n",n_cols);
@@ -159,10 +167,6 @@ void catalog_unit_test::test(){
                 {db_item::type::DB_INT,"ID",true,true},
                 {db_item::type::DB_CHAR,"NAME",false,false,20}
             },
-            {
-                {"IND_NAM","NAM"},
-                {"_PRIM","ID"}
-            },
             "stu",10,"stu.dat"
         },
         {
@@ -170,10 +174,6 @@ void catalog_unit_test::test(){
                 {db_item::type::DB_FLOAT,"SALARY",false,false},
                 {db_item::type::DB_CHAR,"NAME",true,false,20},
                 {db_item::type::DB_INT,"ID",true,true}
-            },
-            {
-                {"IND_SAL","SALARY"},
-                {"_PRIM","ID"}
             },
             "teacher",5,"teacher.dat"
         }

@@ -40,7 +40,6 @@ struct db_table{
         unsigned char length = 0;
     };
     std::vector<column> columns;
-    std::vector<std::pair<std::string,std::string>> index;
     std::string name;
     int size = 0;
     std::string filename;

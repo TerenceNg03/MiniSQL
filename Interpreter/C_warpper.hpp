@@ -63,6 +63,8 @@ conditions* add_condition(conditions* _conditions, condition* _condition);
 void cmd_select(char* name, conditions* conditions);
 void cmd_delete(char* name, conditions* conditions);
 void cmd_execfile(char* filename);
+void cmd_create_index(char* index, char* table, char* cols);
+void cmd_drop_index(char* index);
 #ifdef __cplusplus
 }
 #endif
