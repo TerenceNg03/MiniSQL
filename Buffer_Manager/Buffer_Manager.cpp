@@ -16,136 +16,164 @@ lru_cache::block::block(int size){
 }
 
 void lru_cache::read_buf(char* __ptr, const std::string& filename, int index, int size){
-    int _ptr = index - index%_buf_size;
-    char* ptr = _seek_buf(filename, _ptr);
-    if(index+size<=_ptr+_buf_size){
-        int start = (index>_ptr)?index:_ptr;
-        int len = size;
-        ptr += start%_buf_size;
-        for(int i=0; i<len; i++){
-            *__ptr = *ptr;
-            __ptr++;
-            ptr++;
+    int start_block = index - index%_buf_size;
+    char* ptr = _seek_buf(filename, start_block);
+    ptr += index%_buf_size;
+    if(start_block+_buf_size>=index+size){
+        memcpy(__ptr, ptr, size);
+    }else{
+        int len = _buf_size-index%_buf_size;
+        memcpy(__ptr, ptr, len);
+        __ptr += len;
+        start_block += _buf_size;
+        while (index+size>start_block){
+            len = min(index+size-start_block, _buf_size);
+            ptr = _seek_buf(filename, start_block);
+            memcpy(__ptr, ptr, len);
+            __ptr += len;
+            start_block += _buf_size;
         }
-        return;
     }
-    while(index+size>_ptr+_buf_size){
-        int start = (index>_ptr)?index:_ptr;
-        int len = _buf_size - start%_buf_size;
-        ptr += start%_buf_size;
-        for(int i=0; i<len; i++){
-            *__ptr = *ptr;
-            __ptr++;
-            ptr++;
-        }
-        _ptr += _buf_size;
-        ptr = _seek_buf(filename, _ptr);
-    }
-    int len = index+size-_ptr;
-    for(int i=0; i<len; i++){
-        *__ptr = *ptr;
-        __ptr++;
-        ptr++;
-    }
+//    int _ptr = index - index%_buf_size;
+//    char* ptr = _seek_buf(filename, _ptr);
+//    if(index+size<=_ptr+_buf_size){
+//        int start = (index>_ptr)?index:_ptr;
+//        int len = size;
+//        ptr += start%_buf_size;
+//        for(int i=0; i<len; i++){
+//            *__ptr = *ptr;
+//            __ptr++;
+//            ptr++;
+//        }
+//        return;
+//    }
+//    while(index+size>_ptr+_buf_size){
+//        int start = (index>_ptr)?index:_ptr;
+//        int len = _buf_size - start%_buf_size;
+//        ptr += start%_buf_size;
+//        for(int i=0; i<len; i++){
+//            *__ptr = *ptr;
+//            __ptr++;
+//            ptr++;
+//        }
+//        _ptr += _buf_size;
+//        ptr = _seek_buf(filename, _ptr);
+//    }
+//    int len = index+size-_ptr;
+//    for(int i=0; i<len; i++){
+//        *__ptr = *ptr;
+//        __ptr++;
+//        ptr++;
+//    }
     
 }
 
 void lru_cache::write_buf(char* __ptr, const std::string& filename, int index, int size){
-    int _ptr = index - index%_buf_size;
-    char* ptr = _seek_buf(filename, _ptr);
-    if(index+size<=_ptr+_buf_size){
-        int start = (index>_ptr)?index:_ptr;
-        int len = size;
-        ptr += start%_buf_size;
-        for(int i=0; i<len; i++){
-            *ptr = *__ptr;
-            __ptr++;
-            ptr++;
+    int start_block = index - index%_buf_size;
+    char* ptr = _seek_buf(filename, start_block);
+    ptr += index%_buf_size;
+    if(start_block+_buf_size>=index+size){
+        memcpy(ptr, __ptr, size);
+    }else{
+        int len = _buf_size-index%_buf_size;
+        memcpy(ptr, __ptr, len);
+        __ptr += len;
+        start_block += _buf_size;
+        while (index+size>start_block){
+            len = min(index+size-start_block, _buf_size);
+            ptr = _seek_buf(filename, start_block);
+            memcpy(ptr, __ptr, len);
+            __ptr += len;
+            start_block += _buf_size;
         }
     }
-    while(index+size>_ptr+_buf_size){
-        int start = (index>_ptr)?index:_ptr;
-        int len = _buf_size - start%_buf_size;
-        ptr += start%_buf_size;
-        for(int i=0; i<len; i++){
-            *ptr = *__ptr;
-            __ptr++;
-            ptr++;
-        }
-        _ptr += _buf_size;
-        ptr = _seek_buf(filename, _ptr);
-    }
-    int len = index+size-_ptr;
-    for(int i=0; i<len; i++){
-        *ptr = *__ptr;
-        __ptr++;
-        ptr++;
-    }
+//    if(index+size<=_ptr+_buf_size){
+//        int start = (index>_ptr)?index:_ptr;
+//        int len = size;
+//        ptr += start%_buf_size;
+//        memcpy(ptr, __ptr, len);
+//        return;
+//    }
+//    while(index+size>_ptr+_buf_size){
+//        int start = (index>_ptr)?index:_ptr;
+//        int len = _buf_size - start%_buf_size;
+//        ptr += start%_buf_size;
+//        memcpy(ptr, __ptr, len);
+//        __ptr += len;
+//        _ptr += _buf_size;
+//        ptr = _seek_buf(filename, _ptr);
+//    }
+//    int len = index+size-_ptr;
+//    for(int i=0; i<len; i++){
+//        *ptr = *__ptr;
+//        __ptr++;
+//        ptr++;
+//    }
     
 }
 
 char* lru_cache::_seek_buf(const string& filename, int index){
-    auto it = hash_table.find(make_pair(filename, index));
+    pair<string, int> tag = make_pair(filename, index);
+    auto it = find_if(cache.begin(), cache.end(), [&](auto const& i)->bool{return i.first==tag;});
 
-    if(it==hash_table.end()){
+    if(it==cache.end()){
         if(cache.size()>=_buf_cap){
             auto lru = prev(cache.end());
-            while (lru!=cache.begin()&&(lru->get()->pinned)) {
+            while (lru!=cache.begin()&&(lru->second.pinned)) {
                 lru= prev(lru);
             }
-            if(lru->get()->pinned)throw FormatException("Buffer overflow\n");
-            for(auto i = hash_table.begin(); i!=hash_table.end();i++){
-                if(i->second==*lru){
-                    FILE* fp = fopen(i->first.first.c_str(), "r+");
-                    if(fp!=NULL){
-                        fseek(fp, i->first.second, SEEK_SET);
-                        fwrite(i->second->content.get(), sizeof(char), _buf_size, fp);
-                        fclose(fp);
-                    }
-                    cache.erase(lru);
-                    hash_table.erase(i);
-                    break;
-                }
+            if(lru->second.pinned)throw FormatException("Buffer overflow\n");
+            
+            FILE* fp = fopen(lru->first.first.c_str(), "r+");
+            if(fp!=NULL){
+                fseek(fp, lru->first.second, SEEK_SET);
+                fwrite(lru->second.content.get(), sizeof(char), _buf_size, fp);
+                fclose(fp);
             }
+            cache.erase(lru);
             
         }
-        shared_ptr<block> b_ptr = make_shared<block>(_buf_size);
+        block b_ptr(_buf_size);
         //(char*)malloc(_buf_size*sizeof(char));
         FILE* fp = fopen(filename.c_str(), "r");
         if(fp==NULL)throw FormatException("Faild to open file : %s",filename.c_str());
         fseek(fp, index, SEEK_SET);
-        fread(b_ptr->content.get(), sizeof(char), _buf_size, fp);
+        fread(b_ptr.content.get(), sizeof(char), _buf_size, fp);
         fclose(fp);
         
-        cache.push_front(b_ptr);
-        hash_table.insert(make_pair(make_pair(filename, index), b_ptr));
-        return b_ptr->content.get();
+        cache.push_front(move(make_pair(tag,move(b_ptr))));
+        return cache.begin()->second.content.get();
     }else{
-        return it->second->content.get();
+        cache.splice(cache.begin(), cache,it);
+        return cache.begin()->second.content.get();
     }
     
 };
 
 lru_cache::~lru_cache(){
-    for(auto it:hash_table){
-        FILE* fp = fopen(it.first.first.c_str(), "r+");
+    auto it = cache.begin();
+    for(int i=0; i<cache.size(); i++){
+        FILE* fp = fopen(it->first.first.c_str(), "r+");
         if(fp==NULL)continue;
-        fseek(fp, it.first.second, SEEK_SET);
-        fwrite(it.second->content.get(), sizeof(char), _buf_size, fp);
+        fseek(fp, it->first.second, SEEK_SET);
+        fwrite(it->second.content.get(), sizeof(char), _buf_size, fp);
         fclose(fp);
+        advance(it, 1);
     }
 //    hash_table.clear();
 //    cache.clear();
 }
 
 void lru_cache::pin_buf(const std::string& filename, int index){
-    auto it = hash_table.find(make_pair(filename, index));
-    it->second->pinned = true;
+    auto tag = make_pair(filename, index);
+    auto it = find_if(cache.begin(), cache.end(), [=](auto const& i)->bool{return i.first==tag;});
+    if(it!=cache.end())it->second.pinned = true;
 }
 
 void lru_cache::unpin_buf(const std::string& filename, int index){
-    auto it = hash_table.find(make_pair(filename, index));
-    it->second->pinned = false;
+    auto tag = make_pair(filename, index);
+    auto it = find_if(cache.begin(), cache.end(), [=](auto const& i)->bool{return i.first==tag;});
+    if(it!=cache.end())it->second.pinned = false;
 }
 
 void lru_cache_unit_test::test(){

@@ -27,8 +27,8 @@ class lru_cache{
     };
     const int _buf_size;
     const int _buf_cap;
-    std::list<std::shared_ptr<block>> cache;
-    std::map<std::pair<std::string, int>,std::shared_ptr<block>> hash_table;
+    std::list<std::pair<std::pair<std::string, int>,block>> cache;
+    
     char* _seek_buf(const std::string& filename, int index);
 public:
     lru_cache(int buf_size = 4096, int buf_cap = 512):_buf_size(buf_size),_buf_cap(buf_cap) {};
