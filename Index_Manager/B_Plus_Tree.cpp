@@ -262,12 +262,18 @@ void B_Plus_tree::insert(db_item it,int f_ptr){
         }
     }
     
+    bool found = false;
     for(int i=0; i<tar->keys.size(); i++){
         if(it<tar->keys.at(i).second){
             tar->keys.insert(tar->keys.begin()+i,make_pair(true, it));
             tar->f_ptrs.insert(tar->f_ptrs.begin()+i,f_ptr);
+            found = true;
             break;
         }
+    }
+    if(!found){
+        tar->keys.push_back(make_pair(true, it));
+        tar->f_ptrs.push_back(f_ptr);
     }
     
     if(tar->keys.size()>Node::capability(*this)){
@@ -289,7 +295,7 @@ void B_Plus_tree::_split_node(std::unique_ptr<Node> node){
         node->keys = vector<pair<bool,db_item>>(node->keys.begin(),node->keys.begin()+split);
         node->f_ptrs = vector<int>(node->f_ptrs.begin(),node->f_ptrs.begin()+split);
         new_node->isleaf = true;
-        if(node->parent==-1){
+        if(node->parent<=0){
             unique_ptr<Node> new_root = Node::create(-1, this->size+1, this);
             this->size++;
             new_root->isleaf = false;
@@ -324,7 +330,7 @@ void B_Plus_tree::_split_node(std::unique_ptr<Node> node){
             c->parent = new_node->pos;
         }
         
-        if(node->parent==-1){
+        if(node->parent<=0){
             unique_ptr<Node> new_root = Node::create(-1, this->size+1, this);
             this->size++;
             new_root->children.push_back(node->pos);
@@ -407,7 +413,7 @@ void BPT_unit_test::test(){
     bpt->insert(10, 7);
     bpt->insert(2, -7);
     bpt->insert(9, 10);
-    bpt->insert(-1, 2);
+    bpt->insert(0, 2);
     bpt->insert(18, 6);
     
     
