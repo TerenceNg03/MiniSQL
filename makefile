@@ -4,7 +4,7 @@ CFLAGS = -IException -IBuffer_Manager -ICatalog_Manager -IIndex_Manager -IIndex_
 
 All:buf rec exc cat ind int lex
 	$(CC) $(FLAGS) -c main.cpp -o OBJ/main.o
-	$(CC) OBJ/*.o -o a.out
+	$(CC) OBJ/*.o -o MiniSQL 
 	[ -d DB_Data ] || mkdir DB_Data
 buf: dir
 	$(CC) $(FLAGS) -c Buffer_Manager/Buffer_Manager.cpp -o OBJ/buf.o
@@ -32,4 +32,4 @@ dir:
 clean:
 	[ ! -d OBJ ] || rm -rf OBJ/
 	[ ! -d DB_Data ] || rm -rf DB_Data/
-	[ ! -e a.out ] || rm a.out
+	[ ! -e MiniSQL ] || rm MiniSQL
