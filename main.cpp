@@ -13,7 +13,7 @@
 #include "y.tab.h"
 using namespace std;
 
-lru_cache db_buffer(60,1000);
+lru_cache db_buffer;
 Catalog_Manager ctm;
 void db_driver(){
     yyscan_t scanner;

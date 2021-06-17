@@ -3,6 +3,9 @@
 #include <string.h>
 #include "C_warpper.hpp"
 #include "y.tab.h"
+#ifdef YYDEBUG
+#undef YYDEBUG
+#endif
 #define YYDEBUG 1
 extern int yyparse(yyscan_t scanner);
 

@@ -221,6 +221,21 @@ B_Plus_tree::B_Plus_tree(const std::string& filename, db_item::type T, int key_l
     db_buffer.write_buf(s.get(), filename, 0, db_buffer._buf_size);
 }
 
+B_Plus_tree::~B_Plus_tree(){
+    unique_ptr<char[]> s = make_unique<char[]>(db_buffer._buf_size);
+    char* _ptr = s.get();
+    memcpy(_ptr, &root, sizeof(root));
+    _ptr += sizeof(root);
+    memcpy(_ptr, &size, sizeof(size));
+    _ptr += sizeof(size);
+    memcpy(_ptr, &key_t,sizeof(key_t));
+    _ptr += sizeof(key_t);
+    memcpy(_ptr, &key_t,sizeof(key_l));
+    _ptr += sizeof(key_l);
+    
+    db_buffer.write_buf(s.get(), filename, 0, db_buffer._buf_size);
+}
+
 unique_ptr<B_Plus_tree::Node> B_Plus_tree::_search(db_item key){
     unique_ptr<B_Plus_tree::Node> n_ptr;
     
@@ -358,6 +373,7 @@ void B_Plus_tree::_split_node(std::unique_ptr<Node> node){
 
 void B_Plus_tree::erase(db_item it){
     auto n_ptr = _search(it);
+    if(n_ptr==nullptr)return;
     for(int i=0; i<n_ptr->keys.size(); i++){
         if(n_ptr->keys[i].first&&(n_ptr->keys[i].second==it)){
             n_ptr->keys[i].first = false;

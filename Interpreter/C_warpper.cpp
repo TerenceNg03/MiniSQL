@@ -58,16 +58,18 @@ extern Catalog_Manager ctm;
 
 void cmd_create_table(char* name, c_columns* cols, char* prim){
     bool found = false;
+    int prim_id = 0;
     for(int i=0; i<cols->val.size(); i++){
         //printf("%s %s\n",c.name.c_str(),prim);
         if(!strcmp(cols->val[i].name.c_str(),prim)){
             cols->val[i].IsPrimary = true;
             cols->val[i].IsUnique = true;
+            prim_id = i;
             found = true;
         }
     }
     if(!found){
-        throw FormatException("Invalid primary key %s.\n",name);
+        throw FormatException("Invalid primary key %s.\n",prim);
     }
     
     db_table dbt;
@@ -79,6 +81,7 @@ void cmd_create_table(char* name, c_columns* cols, char* prim){
     dbt.size = 0;
     
     ctm.insert(dbt);
+    B_Plus_tree("DB_Data/"+dbt.name+"_prim.idx",dbt.columns[prim_id].T,dbt.columns[prim_id].length);
     free(name);
 }
 
@@ -144,8 +147,23 @@ void cmd_insert(char* _name, c_dbitems* items){
         }
     }
     
-    
     Record_Manager::insert(ctm.catalogs[it-ctm.catalogs.begin()], items->val);
+    
+    auto dbt = ctm.catalogs[it-ctm.catalogs.begin()];
+    //update index file
+    auto idx = ctm.indexs.begin();
+    while (idx!=ctm.indexs.end()) {
+        if(idx->second.first==name){
+            int i=0;
+            for(i=0; i<dbt.columns.size(); i++){
+                if(dbt.columns[i].name==idx->second.second){
+                    B_Plus_tree bpt("DB_Data/"+idx->first+".idx");
+                    bpt.insert(items->val[i], dbt.size-1);
+                }
+            }
+        }
+        advance(idx, 1);
+    }
     delete items;
 }
 
@@ -258,8 +276,25 @@ void cmd_delete(char* _name, conditions* cds){
         auto entry = Record_Manager::read(*dbt, i);
         if(entry.first&&cds->compare(entry.second, *dbt)){
             Record_Manager::write(*dbt, make_pair(false, entry.second), i);
+        
+            //update index file
+            auto idx = ctm.indexs.begin();
+            while (idx!=ctm.indexs.end()) {
+                if(idx->second.first==name){
+                    int i=0;
+                    for(i=0; i<dbt->columns.size(); i++){
+                        if(dbt->columns[i].name==idx->second.second){
+                            B_Plus_tree bpt("DB_Data/"+idx->first+".idx");
+                            bpt.erase(entry.second[i]);
+                        }
+                    }
+                }
+                advance(idx, 1);
+            }
         }
     }
+    
+    delete cds;
 }
 
 void cmd_execfile(char* filename){
@@ -307,4 +342,5 @@ void cmd_drop_index(char* _index){
     }
     
     ctm.indexs.erase(idx);
+    
 }

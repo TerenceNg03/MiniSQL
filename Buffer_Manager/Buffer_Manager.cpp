@@ -141,7 +141,7 @@ char* lru_cache::_seek_buf(const string& filename, int index){
         fread(b_ptr.content.get(), sizeof(char), _buf_size, fp);
         fclose(fp);
         
-        cache.push_front(move(make_pair(tag,move(b_ptr))));
+        cache.push_front(make_pair(tag,move(b_ptr)));
         return cache.begin()->second.content.get();
     }else{
         cache.splice(cache.begin(), cache,it);
@@ -185,7 +185,8 @@ void lru_cache_unit_test::test(){
     char s[20] = {0};
     lch.read_buf(s, filename, 5, 13);
     printf("%s\n",s);
-    lch.write_buf("123456789", filename, 7, 9);
+    char str[] = "123456789";
+    lch.write_buf(str, filename, 7, 9);
     memset(s, 0, sizeof(s));
     lch.read_buf(s, filename, 0, 19);
     printf("%s\n",s);

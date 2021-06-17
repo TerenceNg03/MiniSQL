@@ -45,6 +45,7 @@ public:
     int root;
     B_Plus_tree(const std::string& filename);
     B_Plus_tree(const std::string& filename, db_item::type T, int key_length);
+    ~B_Plus_tree();
     void insert(db_item it,int f_ptr);
     void erase(db_item it);
     int search(db_item it);
