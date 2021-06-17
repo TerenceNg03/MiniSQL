@@ -1,4 +1,4 @@
-create table teacher(id int,dal float, name char(20), primary key (id));
+create table teacher(dal float, name char(20), id int,primary key (id));
 insert into teacher values(1.23,'Wang',83); 
 insert into teacher values(3.89,'Liu',1); 
 insert into teacher values(5.46,'Lam',87); 

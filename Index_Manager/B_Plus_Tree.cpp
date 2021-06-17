@@ -206,7 +206,8 @@ B_Plus_tree::B_Plus_tree(const std::string& filename, db_item::type T, int key_l
     key_l = key_length;
     root = -1;
     this->filename = filename;
-    system(("touch " +filename).c_str());
+    FILE* fp = fopen(filename.c_str(), "w");
+    fclose(fp);
     unique_ptr<char[]> s = make_unique<char[]>(db_buffer._buf_size);
     char* _ptr = s.get();
     memcpy(_ptr, &root, sizeof(root));
