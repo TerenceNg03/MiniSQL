@@ -237,7 +237,7 @@ void cmd_select(char* _name, conditions* cds){
     if(dbt==ctm.catalogs.end()){
         throw FormatException("Unknown table name %s\n",name.c_str());
     }
-    printf("size : %d\n",dbt->size);
+//    printf("size : %d\n",dbt->size);
 //    auto result = vector<vector<db_item>>();
     for(auto c:dbt->columns){
         printf("\t%s",c.name.c_str());
@@ -276,7 +276,7 @@ void cmd_delete(char* _name, conditions* cds){
         auto entry = Record_Manager::read(*dbt, i);
         if(entry.first&&cds->compare(entry.second, *dbt)){
             Record_Manager::write(*dbt, make_pair(false, entry.second), i);
-        
+
             //update index file
             auto idx = ctm.indexs.begin();
             while (idx!=ctm.indexs.end()) {
