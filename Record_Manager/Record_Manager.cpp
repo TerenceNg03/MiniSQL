@@ -54,7 +54,7 @@ db_item::db_item(double d){
 
 
 bool operator ==(const db_item& A, const db_item& B){
-    if(A.T!=B.T)return false;
+    if(A.T!=B.T)throw FormatException("Compare between different data type is not allowed");
     switch (A.T) {
         case db_item::type::DB_CHAR:
             return A.s==B.s;
@@ -68,7 +68,7 @@ bool operator ==(const db_item& A, const db_item& B){
 }
 
 bool operator <(const db_item& A, const db_item& B){
-    if(A.T!=B.T)return false;
+    if(A.T!=B.T)throw FormatException("Compare between different data type is not allowed");
     switch (A.T) {
         case db_item::type::DB_CHAR:
             return A.s<B.s;
