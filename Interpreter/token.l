@@ -60,5 +60,6 @@ and return AND;
 \* return ALL;
 \n if(!filemode)printf("MiniSQL $ ");/* ignore end of line */
 [ \t]+ /* ignore whitespace */
+. return UNKNOWN;
 %%
 
